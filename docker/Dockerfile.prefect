@@ -22,3 +22,5 @@ RUN mkdir /tmp/datasets/
 COPY environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml python=3.9
 
+WORKDIR /flows
+
