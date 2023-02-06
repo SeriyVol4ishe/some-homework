@@ -1,0 +1,66 @@
+version: '3'
+services:
+  pg-homework:
+    image: postgres:15.1
+    container_name: postgresql-datacamp
+    hostname: postgresql-datacamp
+    env_file:
+      - local.env
+    ports:
+      - "5437:5432"
+    volumes:
+      - /opt/volumes/db/pg-homework-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER} | grep \"accepting connections\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  pg-prefect:
+    image: postgres:15.1
+    container_name: pg-prefect
+    hostname: pg-prefect
+    env_file:
+      - local-prefect.env
+    ports:
+      - "5438:5432"
+    volumes:
+      - /opt/volumes/db/pg-prefect-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER} | grep \"accepting connections\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  pg-admin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    env_file:
+      - local.env
+    ports:
+      - "5050:80"
+    volumes:
+      - /opt/volumes/pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      pg-homework:
+        condition: service_healthy
+
+  prefect:
+    container_name: prefect-server
+    hostname: prefect-server
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.prefect
+    env_file:
+      local-prefect.env
+    ports:
+      - "4200:4200"
+    entrypoint: ["prefect", "orion", "start"]
+    volumes:
+      - ${PWD}/volumes/prefect:/root/.prefect
+      - ${PWD}/volumes/datasets:/tmp/datasets/
+      - ${PWD}/src/prefect/flows:/flows
+    depends_on:
+      pg-prefect:
+        condition: service_healthy
+
