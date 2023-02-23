@@ -68,15 +68,14 @@ def load_data(dataset: pd.DataFrame, dataset_folder: str, dataset_file_name: str
 
 
 if __name__ == '__main__':
-    web_to_gcs(
-        color='yellow',
-        year=2019,
-        month=2,
-        remove_missing=False,
-    )
-    web_to_gcs(
-        color='yellow',
-        year=2019,
-        month=3,
-        remove_missing=False,
-    )
+    for year in [2019, 2020]:
+        for color in ['yellow', 'green', 'fhv']:
+            if color == 'fhv' and year != 2019:
+                break
+            for month in range(1, 13):
+                web_to_gcs(
+                    color=color,
+                    year=year,
+                    month=month,
+                    remove_missing=False,
+                )
